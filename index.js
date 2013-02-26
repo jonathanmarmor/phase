@@ -13,17 +13,14 @@ function errorHandler(err, req, res, next){
 }
 
 app.configure(function(){
+    app.use('/static', express.static(__dirname + '/static'));
+    app.set('views', __dirname + '/views');
     app.use(express.bodyParser());
     app.use(express.methodOverride());
     app.use(express.logger());
     app.use(app.router);
     app.use(errorHandler);
 });
-
-app.use('/static', express.static(__dirname + '/static'));
-
-app.set('view engine', 'hbs');
-
 
 app.get('/health-check', function(req, res){
     res.send('OK');
@@ -54,7 +51,7 @@ app.post('/audio', function(req, res, next){
 
 app.get('/play/:filename?', function(req, res, next){
     var filename = req.params.filename || 'sample.mp3';
-    res.render('play', {'filename': filename}, function(err, html){
+    res.render('play.hbs', {'filename': filename}, function(err, html){
         if(err){
             console.log('Error rendering html: ' + err);
         }
