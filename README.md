@@ -1,6 +1,6 @@
 # Phase
 
-Website to automatically loop multiple copies of uploaded audio and make the copies go out of phase with each other.
+A website where one can upload an audio clip and hear multiple copies of it looped, with each loop having different gap between repetitions so the loops go out of phase with each other.
 
 ## Usage
 
