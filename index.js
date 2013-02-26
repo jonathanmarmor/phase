@@ -14,7 +14,7 @@ function errorHandler(err, req, res, next){
 
 app.configure(function(){
     app.use('/static', express.static(__dirname + '/static'));
-    app.set('views', __dirname + '/views');
+    app.set('views', __dirname + '/static/html');
     app.use(express.bodyParser());
     app.use(express.methodOverride());
     app.use(express.logger());
