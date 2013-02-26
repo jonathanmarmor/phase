@@ -8,6 +8,7 @@ var express = require('express'),
 module.exports = app;
 
 function errorHandler(err, req, res, next){
+    console.log(err.message);
     res.send(err.status || 400, err.message);
 }
 
@@ -43,6 +44,9 @@ app.post('/audio', function(req, res, next){
 
     fs.readFile(file.path, function(err, data){
         fs.writeFile(__dirname + '/static/audio/' + filename, data, function(err){
+            if(err){
+                console.log('Error writing file: ' + err);
+            }
             res.redirect('/play/' + filename);
         });
     });
@@ -51,6 +55,9 @@ app.post('/audio', function(req, res, next){
 app.get('/play/:filename?', function(req, res, next){
     var filename = req.params.filename || 'sample.mp3';
     res.render('play', {'filename': filename}, function(err, html){
+        if(err){
+            console.log('Error rendering html: ' + err);
+        }
         res.send(html);
     });
 });
