@@ -4,8 +4,11 @@
     <meta charset="utf-8">
     <title>phase</title>
     <style>
+        body {
+            font-family:sans-serif;
+            font-size:10pt;
+        }
         a {color:#000000;}
-        #code {font-size:10pt;}
     </style>
     <script src="/static/js/vendor/howler.js/howler.js"></script>
     <script src="/static/js/play.js"></script>
@@ -18,7 +21,8 @@
     <input type="text" name="totalDuration" id="totalDuration" value="2">total duration (minutes)<br/>
     <a id="start_button" onclick="run('{{filename}}');" href="javascript:void(0);" title="Start">start</a>
 </div>
+<div><a href="/">start over</a></div>
 </br>
-<div id="code"><a href="http://github.com/jonathanmarmor/phase">(code)</a></div>
+<div><a href="http://github.com/jonathanmarmor/phase">(code)</a></div>
 </body>
 </html>
