@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>phase</title>
+    <style>
+        a {color:#000000;}
+        #code {font-size:10pt;}
+    </style>
+    <script src="/static/js/vendor/howler.js/howler.js"></script>
+    <script src="/static/js/play.js"></script>
+</head>
+<body>
+<div><a href="/">phase</a></div>
+<div>
+    <input type="text" name="gap" id="gap" value="20">gap (milliseconds)<br/>
+    <input type="text" name="numTracks" id="numTracks" value="8">number of tracks<br/>
+    <input type="text" name="totalDuration" id="totalDuration" value="2">total duration (minutes)<br/>
+    <a id="start_button" onclick="run('{{filename}}');" href="javascript:void(0);" title="Start">start</a>
+</div>
+</br>
+<div id="code"><a href="http://github.com/jonathanmarmor/phase">(code)</a></div>
+</body>
+</html>
