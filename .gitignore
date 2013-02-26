@@ -25,5 +25,3 @@ bundle.js
 
 *.wav
 *.mp3
-
-static/audio/*
