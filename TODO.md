@@ -1,4 +1,4 @@
-## Phase v1 To Do
+# Phase v1 To Do
 
 - Client app needs to be able to deal with the audio directly rather than needing it to be served by a webserver.  This requires tearing howler.js apart a bit, but that was bound to be necessary.
 
@@ -51,33 +51,3 @@
 - Multiple phases at the same time.  With different clips and/or different settings.
 
 - Add ability to slow down or speed up (change the tempo) on the fly.  This means what we're using as milli/seconds actually is some metrical substrate that starts out matching milli/seconds but their values can actually be changed.  Maybe also change the values displayed to the user for gap, period duration, etc.
-
-
-
-
-def linear(track_number, gap):
-    return track_number * gap
-
-def fib(a=1, b=1):
-    print float(b) / a
-    a = b
-    b = a + b
-    return fib(a, b)
-
-class Fib(object):
-    def __init__(self, a=1, b=1):
-        self.a = a
-        self.b = b
-    @property
-    def ratio(self):
-        return float(self.b) / self.a
-    def next(self):
-        ratio = self.ratio
-        a = self.a
-        self.a = self.b
-        self.b = a + self.b
-        return ratio
-
-
-class Phase(object):
-    def __init__(self, dur, gap, num_tracks):
