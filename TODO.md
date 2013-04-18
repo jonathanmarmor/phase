@@ -51,3 +51,7 @@
 - Multiple phases at the same time.  With different clips and/or different settings.
 
 - Add ability to slow down or speed up (change the tempo) on the fly.  This means what we're using as milli/seconds actually is some metrical substrate that starts out matching milli/seconds but their values can actually be changed.  Maybe also change the values displayed to the user for gap, period duration, etc.  (Ooops, this makes sense for flute phase app but probably not this one, where it's just a single audio file being phased.)
+
+- How can we test this application?
+
+- Setup Travis.
