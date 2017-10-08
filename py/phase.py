@@ -13,6 +13,46 @@ import argparse
 import sox
 
 
+def fade_in_gains(n_tracks, quietest=-60.0):
+    result = []
+    chunk_size = -quietest / (n_tracks - 1)
+    for i in range(n_tracks):
+        this_chunk_size = chunk_size * i
+        dB = quietest + this_chunk_size
+        result.append(dB)
+    return result
+
+
+def fade_out_gains(n_tracks, quietest=-60.0):
+    result = []
+    chunk_size = -quietest / (n_tracks - 1)
+    for i in reversed(range(n_tracks)):
+        this_chunk_size = chunk_size * i
+        dB = quietest + this_chunk_size
+        result.append(dB)
+    return result
+
+
+def fade_in_out_gains(n_tracks, quietest=-60.0):
+    half = n_tracks / 2
+    ins = fade_in_gains(half, quietest=quietest)
+    outs = fade_out_gains(half, quietest=quietest)
+    if n_tracks % 2:
+        ins.append(0.0)
+    return ins + outs
+
+
+def get_gain_dbs(fade_type, n_tracks, quietest=-60.0):
+    if fade_type is None:
+        return [0.0 for _ in range(n_tracks)]
+    if fade_type == 'in':
+        return fade_in_gains(n_tracks, quietest=quietest)
+    if fade_type == 'out':
+        return fade_out_gains(n_tracks, quietest=quietest)
+    if fade_type == 'in-out':
+        return fade_in_out_gains(n_tracks, quietest=quietest)
+
+
 class Sample(object):
     def __init__(self, file_name, start_pad_duration=0, end_pad_duration=0):
         self.file_name = file_name
@@ -31,7 +71,8 @@ class Phase(object):
             end_align=False,
             start_pad_duration=0.0,
             end_pad_duration=0.0,
-            temp_folder='tmp/'):
+            temp_folder='tmp/',
+            fade=None):
 
         self.input_file = input_file
         self.output_file = output_file
@@ -42,6 +83,9 @@ class Phase(object):
         self.start_pad_duration = start_pad_duration
         self.end_pad_duration = end_pad_duration
         self.temp_folder = temp_folder
+        self.fade = fade
+
+        self.gain_dbs = get_gain_dbs(fade, n_tracks)
 
         self.sample = Sample(
                 input_file,
@@ -59,7 +103,8 @@ class Phase(object):
             local_repeat_count,
             has_initial_rest=False,
             mute_first=False,
-            mute_last=False):
+            mute_last=False,
+            gain_db=0.0):
 
         rest_duration = self.sample.full_duration + local_gap - self.sample.start_pad_duration - self.sample.end_pad_duration
 
@@ -76,11 +121,16 @@ class Phase(object):
             tfm.pad(start_duration=self.sample.full_duration + rest_duration)
         if mute_last:
             tfm.pad(end_duration=self.sample.full_duration + rest_duration)
+        tfm.gain(gain_db=gain_db)
 
         tfm.build(self.sample.file_name, temp_output_file)
 
     def checker_track(self,
-            temp_output_file, local_gap, mute_first=False, mute_last=False):
+            temp_output_file,
+            local_gap,
+            mute_first=False,
+            mute_last=False,
+            gain_db=0.0):
         """Repeat the sample on alternating tracks so the fade in and out can overlap"""
 
         track_a_file = self.temp_folder + 'track-a.wav'
@@ -93,16 +143,16 @@ class Phase(object):
         if mute_last:
             if remainder:
                 # there are an odd number of repeats, so the muted last repetition is in track A
-                self.make_track(track_a_file, local_gap, track_a_repeat_count, mute_last=mute_last)
-                self.make_track(track_b_file, local_gap, track_b_repeat_count, has_initial_rest=True)
+                self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db, mute_last=mute_last)
+                self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True)
             else:
                 # there are an even number of repeats, so the muted last repetition is in track B
-                self.make_track(track_a_file, local_gap, track_a_repeat_count)
-                self.make_track(track_b_file, local_gap, track_b_repeat_count, has_initial_rest=True, mute_last=mute_last)
+                self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db)
+                self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True, mute_last=mute_last)
 
         else:
-            self.make_track(track_a_file, local_gap, track_a_repeat_count, mute_first=mute_first)
-            self.make_track(track_b_file, local_gap, track_b_repeat_count, has_initial_rest=True)
+            self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db, mute_first=mute_first)
+            self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True)
 
         cbn = sox.Combiner()
         cbn.build([track_a_file, track_b_file], temp_output_file, 'mix-power')
@@ -121,11 +171,14 @@ class Phase(object):
             if self.end_align and i is not self.n_tracks:
                 mute_last = True
 
+            gain_db = self.gain_dbs[i - 1]
+
             self.checker_track(
                     track_file_name,
                     local_gap=self.gap * i,
                     mute_first=mute_first,
-                    mute_last=mute_last)
+                    mute_last=mute_last,
+                    gain_db=gain_db)
 
         if self.end_align:
             track_durations = [sox.file_info.duration(f) for f in track_file_names]
@@ -193,6 +246,13 @@ def get_args():
             '--temp-folder',
             help='path of directory to put temporary files in',
             default='tmp/')
+    parser.add_argument(
+            '-f',
+            '--fade',
+            help='relative volumes of tracks: flat, fade in, fade out, or fade in then out',
+            default=None,
+            choices=[None, 'in', 'out', 'in-out'])
+
 
     return parser.parse_args()
 
@@ -209,4 +269,5 @@ if __name__ == '__main__':
             end_align=args.end_align,
             start_pad_duration=args.start_pad_duration,
             end_pad_duration=args.end_pad_duration,
-            temp_folder=args.temp_folder)
+            temp_folder=args.temp_folder,
+            fade=args.fade)

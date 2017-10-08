@@ -24,6 +24,7 @@
 ```
 usage: phase.py [-h] [-n N_TRACKS] [-g GAP] [-r REPEAT_COUNT] [-e]
                 [-S START_PAD_DURATION] [-E END_PAD_DURATION] [-t TEMP_FOLDER]
+                [-f {None,in,out,in-out}]
                 input_file output_file
 
 positional arguments:
@@ -45,5 +46,7 @@ optional arguments:
                         duration of silence at the end of the sample
   -t TEMP_FOLDER, --temp-folder TEMP_FOLDER
                         path of directory to put temporary files in
-
+  -f {None,in,out,in-out}, --fade {None,in,out,in-out}
+                        relative volumes of tracks: flat, fade in, fade out,
+                        or fade in then out
 ```
