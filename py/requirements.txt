@@ -1,0 +1,2 @@
+# brew install sox --with-lame --with-flac --with-libvorbis
+sox
