@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
-"""
+"""Automatic Steve Reich phasing music
 
-phase.py sample.wav output.wav --n-tracks=10 --gap=.02 --repeat-count=20 --end-align
-
-
+Usage:
+    ./phase.py test_input_file.wav test_output_file.wav --n-tracks=10 --gap=.02 --repeat-count=20 --end-align
 
 """
 
@@ -44,8 +43,6 @@ class Phase(object):
         self.end_pad_duration = end_pad_duration
         self.temp_folder = temp_folder
 
-        self.sox = sox
-
         self.sample = Sample(
                 input_file,
                 start_pad_duration=start_pad_duration,
@@ -56,8 +53,13 @@ class Phase(object):
 
         self.phase()
 
-    def make_track(self, temp_output_file, local_gap, local_repeat_count,
-            has_initial_rest=False, mute_first=False, mute_last=False):
+    def make_track(self,
+            temp_output_file,
+            local_gap,
+            local_repeat_count,
+            has_initial_rest=False,
+            mute_first=False,
+            mute_last=False):
 
         rest_duration = self.sample.full_duration + local_gap - self.sample.start_pad_duration - self.sample.end_pad_duration
 
@@ -77,7 +79,8 @@ class Phase(object):
 
         tfm.build(self.sample.file_name, temp_output_file)
 
-    def checker_track(self, temp_output_file, local_gap, mute_first=False, mute_last=False):
+    def checker_track(self,
+            temp_output_file, local_gap, mute_first=False, mute_last=False):
         """Repeat the sample on alternating tracks so the fade in and out can overlap"""
 
         track_a_file = self.temp_folder + 'track-a.wav'
@@ -118,8 +121,11 @@ class Phase(object):
             if self.end_align and i is not self.n_tracks:
                 mute_last = True
 
-            self.checker_track(track_file_name, local_gap=self.gap * i,
-                    mute_first=mute_first, mute_last=mute_last)
+            self.checker_track(
+                    track_file_name,
+                    local_gap=self.gap * i,
+                    mute_first=mute_first,
+                    mute_last=mute_last)
 
         if self.end_align:
             track_durations = [sox.file_info.duration(f) for f in track_file_names]
@@ -147,54 +153,52 @@ def get_args():
     parser.add_argument('output_file')
 
     parser.add_argument(
-        '-n',
-        '--n-tracks',
-        help='how many tracks to generate',
-        type=int,
-        default=9)
+            '-n',
+            '--n-tracks',
+            help='how many tracks to generate',
+            type=int,
+            default=9)
     parser.add_argument(
-        '-g',
-        '--gap',
-        help='the smallest gap between phrases',
-        type=float,
-        default=.03)
+            '-g',
+            '--gap',
+            help='the smallest gap between phrases',
+            type=float,
+            default=.03)
     parser.add_argument(
-        '-r',
-        '--repeat-count',
-        help='the number of times the phrase should repeat',
-        type=int,
-        default=20)
+            '-r',
+            '--repeat-count',
+            help='the number of times the phrase should repeat',
+            type=int,
+            default=20)
     parser.add_argument(
-        '-e',
-        '--end-align',
-        help='come together in the end, rather than starting out together',
-        action='store_true',
-        default=False)
+            '-e',
+            '--end-align',
+            help='come together in the end, rather than starting out together',
+            action='store_true',
+            default=False)
     parser.add_argument(
-        '-S',
-        '--start-pad-duration',
-        help='duration of silence at the beginning of the sample',
-        type=float,
-        default=0.0)
+            '-S',
+            '--start-pad-duration',
+            help='duration of silence at the beginning of the sample',
+            type=float,
+            default=0.0)
     parser.add_argument(
-        '-E',
-        '--end-pad-duration',
-        help='duration of silence at the end of the sample',
-        type=float,
-        default=0.0)
+            '-E',
+            '--end-pad-duration',
+            help='duration of silence at the end of the sample',
+            type=float,
+            default=0.0)
     parser.add_argument(
-        '-t',
-        '--temp-folder',
-        help='path of directory to put temporary files in',
-        default='tmp/')
+            '-t',
+            '--temp-folder',
+            help='path of directory to put temporary files in',
+            default='tmp/')
 
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = get_args()
-
-    print args
 
     phaser = Phase(
             args.input_file,
@@ -205,5 +209,4 @@ if __name__ == '__main__':
             end_align=args.end_align,
             start_pad_duration=args.start_pad_duration,
             end_pad_duration=args.end_pad_duration,
-            temp_folder=args.temp_folder
-        )
+            temp_folder=args.temp_folder)
