@@ -46,11 +46,14 @@ def get_gain_dbs(fade_type, n_tracks, quietest=-60.0):
     if fade_type is None:
         return [0.0 for _ in range(n_tracks)]
     if fade_type == 'in':
-        return fade_in_gains(n_tracks, quietest=quietest)
-    if fade_type == 'out':
-        return fade_out_gains(n_tracks, quietest=quietest)
-    if fade_type == 'in-out':
-        return fade_in_out_gains(n_tracks, quietest=quietest)
+        fade_function = fade_in_gains
+    elif fade_type == 'out':
+        fade_function = fade_out_gains
+    elif fade_type == 'in-out':
+        fade_function = fade_in_out_gains
+    else:
+        raise Exception('Allowed values for fade are None, "in", "out", and "in-out"')
+    return fade_function(n_tracks, quietest=quietest)
 
 
 class Sample(object):
