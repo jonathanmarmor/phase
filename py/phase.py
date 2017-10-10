@@ -213,19 +213,19 @@ def get_args():
             '--n-tracks',
             help='how many tracks to generate',
             type=int,
-            default=9)
+            default=10)
     parser.add_argument(
             '-g',
             '--gap',
             help='the smallest gap between phrases',
             type=float,
-            default=.03)
+            default=0.02)
     parser.add_argument(
             '-r',
             '--repeat-count',
             help='the number of times the phrase should repeat',
             type=int,
-            default=20)
+            default=10)
     parser.add_argument(
             '-e',
             '--end-align',
