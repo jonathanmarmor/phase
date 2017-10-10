@@ -69,7 +69,7 @@ class Phase(object):
             input_file,
             output_file,
             n_tracks=10,
-            gap=0.0,
+            gap=0.02,
             repeat_count=10,
             end_align=False,
             start_pad_duration=0.0,
