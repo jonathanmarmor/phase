@@ -70,6 +70,7 @@ class Phase(object):
             output_file,
             n_tracks=10,
             gap=0.02,
+            initial_gap=0,
             repeat_count=10,
             end_align=False,
             start_pad_duration=0.0,
@@ -81,6 +82,7 @@ class Phase(object):
         self.output_file = output_file
         self.n_tracks = n_tracks
         self.gap = gap
+        self.initial_gap = initial_gap
         self.repeat_count = repeat_count
         self.end_align = end_align
         self.start_pad_duration = start_pad_duration
@@ -221,6 +223,12 @@ def get_args():
             type=float,
             default=0.02)
     parser.add_argument(
+            '-i',
+            '--initial-gap',
+            help='TODO: describe this better. Start (or end, if --end-align=True) this many repetitions off from alignment. A multiple of `gap`',
+            type=int,
+            default=0)
+    parser.add_argument(
             '-r',
             '--repeat-count',
             help='the number of times the phrase should repeat',
@@ -268,6 +276,7 @@ if __name__ == '__main__':
             args.output_file,
             n_tracks=args.n_tracks,
             gap=args.gap,
+            initial_gap=args.initial_gap,
             repeat_count=args.repeat_count,
             end_align=args.end_align,
             start_pad_duration=args.start_pad_duration,
