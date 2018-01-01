@@ -3,7 +3,7 @@
 """Automatic Steve Reich phasing music
 
 Usage:
-    ./phase.py test_input_file.wav --n-tracks=10 --gap=.02 --repeat-count=20 --end-align
+    ./phase.py test_input_files/ravi1.wav --n-tracks=24 --gap=.02 --fade=in-out --repeat-count=20 --end-align
 
 """
 

@@ -12,41 +12,19 @@
 
 ## Run the example
 
-1. `./phase.py test_input_file.wav test_output_file.wav --n-tracks=10 --gap=.02 --repeat-count=20 --end-align`
-1. Open `test_output_file.wav` with an audio player and listen to it
+1. `./phase.py test_input_files/ravi1.wav --n-tracks=24 --gap=.02 --fade=in-out --repeat-count=20 --end-align`
+1. Open `output/ravi1/ravi1_<timestamp>.wav` with an audio player and listen to it
 
 ## Run with your own sample
 
-`./phase.py your_own_sample.wav your_own_output_file.wav --n-tracks=10 --gap=.02 --repeat-count=20 --end-align`
+1. `./phase.py your_own_sample.wav --n-tracks=8 --gap=.3 --repeat-count=10`
+1. Look in `output/your_own_sample` for the resulting wav files
 
 ### Arguments
 
-```
-usage: phase.py [-h] [-n N_TRACKS] [-g GAP] [-r REPEAT_COUNT] [-e]
-                [-S START_PAD_DURATION] [-E END_PAD_DURATION] [-t TEMP_FOLDER]
-                [-f {None,in,out,in-out}]
-                input_file output_file
+Do `./phase.py -h` to see all the arguments and options and how to use them.
 
-positional arguments:
-  input_file
-  output_file
+### TODO
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -n N_TRACKS, --n-tracks N_TRACKS
-                        how many tracks to generate
-  -g GAP, --gap GAP     the smallest gap between phrases
-  -r REPEAT_COUNT, --repeat-count REPEAT_COUNT
-                        the number of times the phrase should repeat
-  -e, --end-align       come together in the end, rather than starting out
-                        together
-  -S START_PAD_DURATION, --start-pad-duration START_PAD_DURATION
-                        duration of silence at the beginning of the sample
-  -E END_PAD_DURATION, --end-pad-duration END_PAD_DURATION
-                        duration of silence at the end of the sample
-  -t TEMP_FOLDER, --temp-folder TEMP_FOLDER
-                        path of directory to put temporary files in
-  -f {None,in,out,in-out}, --fade {None,in,out,in-out}
-                        relative volumes of tracks: flat, fade in, fade out,
-                        or fade in then out
-```
+- Finish adding initial gap
+- Make more and better options for fade curves
