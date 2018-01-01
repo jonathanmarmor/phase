@@ -28,3 +28,4 @@ Do `./phase.py -h` to see all the arguments and options and how to use them.
 
 - Finish adding initial gap
 - Make more and better options for fade curves
+- Debug: sometimes the first and last repetitions are solo when they shouldn't be, and vice versa

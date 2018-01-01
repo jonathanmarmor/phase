@@ -78,7 +78,8 @@ class Phase(object):
             end_pad_duration=0.0,
             temp_folder='tmp/',
             output_folder='output/',
-            fade=None):
+            fade=None,
+            quietest=-60.0):
 
         self.args = {
             "input_file": input_file,
@@ -92,6 +93,7 @@ class Phase(object):
             "temp_folder": temp_folder,
             "output_folder": output_folder,
             "fade": fade,
+            "quietest": quietest,
         }
 
         self.input_file = input_file
@@ -105,8 +107,9 @@ class Phase(object):
         self.temp_folder = temp_folder
         self.output_folder = output_folder
         self.fade = fade
+        self.quietest = quietest
 
-        self.gain_dbs = get_gain_dbs(fade, n_tracks)
+        self.gain_dbs = get_gain_dbs(fade, n_tracks, quietest=quietest)
 
         self.sample = Sample(
                 input_file,
@@ -322,6 +325,12 @@ def get_args():
             help='relative volumes of tracks: flat, fade in, fade out, or fade in then out',
             default=None,
             choices=[None, 'in', 'out', 'in-out'])
+    parser.add_argument(
+            '-q',
+            '--quietest',
+            help='The volume in dB of the quietest track(s) when fading',
+            type=float,
+            default=-60.0)
 
     args = parser.parse_args()
 
@@ -342,4 +351,5 @@ if __name__ == '__main__':
             end_pad_duration=args.end_pad_duration,
             temp_folder=args.temp_folder,
             output_folder=args.output_folder,
-            fade=args.fade)
+            fade=args.fade,
+            quietest=args.quietest)
