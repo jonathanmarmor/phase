@@ -3,12 +3,14 @@
 """Automatic Steve Reich phasing music
 
 Usage:
-    ./phase.py test_input_file.wav test_output_file.wav --n-tracks=10 --gap=.02 --repeat-count=20 --end-align
+    ./phase.py test_input_file.wav --n-tracks=10 --gap=.02 --repeat-count=20 --end-align
 
 """
 
 import os
+import datetime
 import argparse
+import json
 
 import sox
 
@@ -67,7 +69,6 @@ class Sample(object):
 class Phase(object):
     def __init__(self,
             input_file,
-            output_file,
             n_tracks=10,
             gap=0.02,
             initial_gap=0,
@@ -76,10 +77,24 @@ class Phase(object):
             start_pad_duration=0.0,
             end_pad_duration=0.0,
             temp_folder='tmp/',
+            output_folder='output/',
             fade=None):
 
+        self.args = {
+            "input_file": input_file,
+            "n_tracks": n_tracks,
+            "gap": gap,
+            "initial_gap": initial_gap,
+            "repeat_count": repeat_count,
+            "end_align": end_align,
+            "start_pad_duration": start_pad_duration,
+            "end_pad_duration": end_pad_duration,
+            "temp_folder": temp_folder,
+            "output_folder": output_folder,
+            "fade": fade,
+        }
+
         self.input_file = input_file
-        self.output_file = output_file
         self.n_tracks = n_tracks
         self.gap = gap
         self.initial_gap = initial_gap
@@ -88,6 +103,7 @@ class Phase(object):
         self.start_pad_duration = start_pad_duration
         self.end_pad_duration = end_pad_duration
         self.temp_folder = temp_folder
+        self.output_folder = output_folder
         self.fade = fade
 
         self.gain_dbs = get_gain_dbs(fade, n_tracks)
@@ -100,7 +116,28 @@ class Phase(object):
         if not os.path.exists(self.temp_folder):
             os.mkdir(self.temp_folder)
 
+        self.output_file_name = self.build_output_file_name()
+        self.output_wav_file_name = self.output_file_name + '.wav'
+
+        self.write_args_json()
+
+        print
+        print self.output_file_name
+        print
+
         self.phase()
+
+    def write_args_json(self):
+        self.output_json_file_name = self.output_file_name + '.json'
+
+        args_json = json.dumps(
+                self.args,
+                sort_keys=True,
+                indent=4,
+                separators=(',', ': '))
+
+        with open(self.output_json_file_name, 'w') as f:
+            f.write(args_json)
 
     def make_track(self,
             temp_output_file,
@@ -201,14 +238,31 @@ class Phase(object):
         cbn = sox.Combiner()
         cbn.silence(location=1)  # Remove silence from the beginning
         cbn.silence(location=-1)  # Remove silence from the end
-        cbn.build(track_file_names, self.output_file, 'mix-power')
+        cbn.build(track_file_names, self.output_wav_file_name, 'mix-power')
+
+    def build_output_file_name(self):
+        # clean input file name
+        input_file_name = self.input_file.split('/')[-1]
+        input_no_extension = ''.join(input_file_name.split('.')[:-1])
+
+        # Make output folder for this input file
+        output_folder = os.path.join(self.output_folder, input_no_extension)
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        # Make file name for this run of phase.py
+        timestamp = datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+
+        output_file_name = '{}_{}'.format(input_no_extension, timestamp)
+
+        output_file_name = os.path.join(output_folder, output_file_name)
+        return output_file_name
 
 
 def get_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('input_file')
-    parser.add_argument('output_file')
 
     parser.add_argument(
             '-n',
@@ -258,14 +312,20 @@ def get_args():
             help='path of directory to put temporary files in',
             default='tmp/')
     parser.add_argument(
+            '-o',
+            '--output-folder',
+            help='path of directory to put output',
+            default='output/')
+    parser.add_argument(
             '-f',
             '--fade',
             help='relative volumes of tracks: flat, fade in, fade out, or fade in then out',
             default=None,
             choices=[None, 'in', 'out', 'in-out'])
 
+    args = parser.parse_args()
 
-    return parser.parse_args()
+    return args
 
 
 if __name__ == '__main__':
@@ -273,7 +333,6 @@ if __name__ == '__main__':
 
     phaser = Phase(
             args.input_file,
-            args.output_file,
             n_tracks=args.n_tracks,
             gap=args.gap,
             initial_gap=args.initial_gap,
@@ -282,4 +341,5 @@ if __name__ == '__main__':
             start_pad_duration=args.start_pad_duration,
             end_pad_duration=args.end_pad_duration,
             temp_folder=args.temp_folder,
+            output_folder=args.output_folder,
             fade=args.fade)
