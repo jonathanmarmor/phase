@@ -79,21 +79,23 @@ class Phase(object):
             temp_folder='tmp/',
             output_folder='output/',
             fade=None,
-            quietest=-60.0):
+            quietest=-60.0,
+            gain=0.0):
 
         self.args = {
-            "input_file": input_file,
-            "n_tracks": n_tracks,
-            "gap": gap,
-            "initial_gap": initial_gap,
-            "repeat_count": repeat_count,
-            "end_align": end_align,
-            "start_pad_duration": start_pad_duration,
-            "end_pad_duration": end_pad_duration,
-            "temp_folder": temp_folder,
-            "output_folder": output_folder,
-            "fade": fade,
-            "quietest": quietest,
+            'input_file': input_file,
+            'n_tracks': n_tracks,
+            'gap': gap,
+            'initial_gap': initial_gap,
+            'repeat_count': repeat_count,
+            'end_align': end_align,
+            'start_pad_duration': start_pad_duration,
+            'end_pad_duration': end_pad_duration,
+            'temp_folder': temp_folder,
+            'output_folder': output_folder,
+            'fade': fade,
+            'quietest': quietest,
+            'gain': gain,
         }
 
         self.input_file = input_file
@@ -108,6 +110,7 @@ class Phase(object):
         self.output_folder = output_folder
         self.fade = fade
         self.quietest = quietest
+        self.gain = gain
 
         self.gain_dbs = get_gain_dbs(fade, n_tracks, quietest=quietest)
 
@@ -166,7 +169,7 @@ class Phase(object):
             tfm.pad(start_duration=self.sample.full_duration + rest_duration)
         if mute_last:
             tfm.pad(end_duration=self.sample.full_duration + rest_duration)
-        tfm.gain(gain_db=gain_db)
+        tfm.gain(gain_db=gain_db + self.gain)
 
         tfm.build(self.sample.file_name, temp_output_file)
 
@@ -205,7 +208,7 @@ class Phase(object):
     def phase(self):
         track_file_names = []
         for i in range(1, self.n_tracks + 1):
-            track_file_name = self.temp_folder + 'track-{}.wav'.format(i)
+            track_file_name = self.temp_folder + 'aaaaaa-track-{}.wav'.format(i)
             track_file_names.append(track_file_name)
 
             mute_first = False
@@ -331,6 +334,12 @@ def get_args():
             help='The volume in dB of the quietest track(s) when fading',
             type=float,
             default=-60.0)
+    parser.add_argument(
+            '-G',
+            '--gain',
+            help='Raise or lower the over all volume in dB (or negative dB to lower)',
+            type=float,
+            default=0.0)
 
     args = parser.parse_args()
 
@@ -352,4 +361,5 @@ if __name__ == '__main__':
             temp_folder=args.temp_folder,
             output_folder=args.output_folder,
             fade=args.fade,
-            quietest=args.quietest)
+            quietest=args.quietest,
+            gain=args.gain)
