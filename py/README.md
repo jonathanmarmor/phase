@@ -26,7 +26,11 @@ Do `./phase.py -h` to see all the arguments and options and how to use them.
 
 ### TODO
 
+#### Core features
 - Finish adding initial gap
+- Make soloing of start and end repetition manually toggleable.
+- Make stripping of silence at the beginning and end manually toggleable.
+
+#### Might be interesting to try
 - Make more and better options for fade curves
-- Debug: sometimes the first and last repetitions are solo when they shouldn't be, and vice versa
 - Add panning?
