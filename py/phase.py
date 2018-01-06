@@ -208,7 +208,7 @@ class Phase(object):
     def phase(self):
         track_file_names = []
         for i in range(1, self.n_tracks + 1):
-            track_file_name = self.temp_folder + 'aaaaaa-track-{}.wav'.format(i)
+            track_file_name = self.temp_folder + 'track-{}.wav'.format(i)
             track_file_names.append(track_file_name)
 
             mute_first = False
