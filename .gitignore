@@ -1,8 +1,7 @@
-test_output_file.wav
-output.wav
+phase/output/
+phase/tmp/
 output/
 tmp/
-interesting results/
 
 # OS X junk
 .DS_Store
