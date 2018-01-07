@@ -80,7 +80,9 @@ class Phase(object):
             output_folder='output/',
             fade=None,
             quietest=-60.0,
-            gain=0.0):
+            gain=0.0,
+            trim_start=False,
+            trim_end=False):
 
         self.args = {
             'input_file': input_file,
@@ -96,6 +98,8 @@ class Phase(object):
             'fade': fade,
             'quietest': quietest,
             'gain': gain,
+            'trim_start': trim_start,
+            'trim_end': trim_end,
         }
 
         self.input_file = input_file
@@ -111,6 +115,8 @@ class Phase(object):
         self.fade = fade
         self.quietest = quietest
         self.gain = gain
+        self.trim_start = trim_start
+        self.trim_end = trim_end
 
         self.gain_dbs = get_gain_dbs(fade, n_tracks, quietest=quietest)
 
@@ -242,8 +248,10 @@ class Phase(object):
             track_file_names = new_track_file_names
 
         cbn = sox.Combiner()
-        cbn.silence(location=1)  # Remove silence from the beginning
-        cbn.silence(location=-1)  # Remove silence from the end
+        if self.trim_start:
+            cbn.silence(location=1)  # Remove silence from the beginning
+        if self.trim_end:
+            cbn.silence(location=-1)  # Remove silence from the end
         cbn.build(track_file_names, self.output_wav_file_name, 'mix-power')
 
     def build_output_file_name(self):
@@ -340,6 +348,16 @@ def get_args():
             help='Raise or lower the over all volume in dB (or negative dB to lower)',
             type=float,
             default=0.0)
+    parser.add_argument(
+            '--trim-start',
+            help='Remove silence from the beginning of the track',
+            action='store_true',
+            default=False)
+    parser.add_argument(
+            '--trim-end',
+            help='Remove silence from the end of the track',
+            action='store_true',
+            default=False)
 
     args = parser.parse_args()
 
@@ -362,4 +380,6 @@ if __name__ == '__main__':
             output_folder=args.output_folder,
             fade=args.fade,
             quietest=args.quietest,
-            gain=args.gain)
+            gain=args.gain,
+            trim_start=args.trim_start,
+            trim_end=args.trim_end)
