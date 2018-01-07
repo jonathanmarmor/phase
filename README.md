@@ -6,9 +6,14 @@
 
 1. Install [Homebrew](https://brew.sh/)
 1. Install `sox`: `brew install sox --with-lame --with-flac --with-libvorbis`
+
+To use from the command line:
 1. Clone this repo
 1. `cd phase/py`
 1. `pip install -r requirements.txt`
+
+To use the Python library:
+1. `pip install git+git://github.com/jonathanmarmor/phase.git@master`
 
 ## Run the example
 
