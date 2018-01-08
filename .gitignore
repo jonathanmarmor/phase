@@ -2,6 +2,7 @@ phase/output/
 phase/tmp/
 output/
 tmp/
+py/
 
 # OS X junk
 .DS_Store
