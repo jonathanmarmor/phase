@@ -83,8 +83,7 @@ class Phase(object):
             gain=0.0,
             trim_start=False,
             trim_end=False,
-            solo_first=False,
-            solo_last=False):
+            solo=None):
 
         self.args = {
             'input_file': input_file,
@@ -102,8 +101,7 @@ class Phase(object):
             'gain': gain,
             'trim_start': trim_start,
             'trim_end': trim_end,
-            'solo_first': solo_first,
-            'solo_last': solo_last,
+            'solo': solo,
         }
 
         self.input_file = input_file
@@ -121,8 +119,9 @@ class Phase(object):
         self.gain = gain
         self.trim_start = trim_start
         self.trim_end = trim_end
-        self.solo_first = solo_first
-        self.solo_last = solo_last
+        self.solo = solo
+
+        self.set_solo_flags()
 
         self.gain_dbs = get_gain_dbs(fade, n_tracks, quietest=quietest)
 
@@ -162,14 +161,14 @@ class Phase(object):
             local_gap,
             local_repeat_count,
             has_initial_rest=False,
-            # mute_first=False,
-            # mute_last=False,
+            mute_first=False,
+            mute_last=False,
             gain_db=0.0):
 
         rest_duration = self.sample.full_duration + local_gap - self.sample.start_pad_duration - self.sample.end_pad_duration
 
-        # if mute_first or mute_last:
-        #     local_repeat_count -= 1
+        if mute_first or mute_last:
+            local_repeat_count -= 1
 
         tfm = sox.Transformer()
         tfm.pad(end_duration=rest_duration)
@@ -177,10 +176,13 @@ class Phase(object):
             tfm.repeat(count=local_repeat_count)
         if has_initial_rest:
             tfm.pad(start_duration=rest_duration + ((self.sample.full_duration - rest_duration) / 2.0))
-        # if mute_first:
-        #     tfm.pad(start_duration=self.sample.full_duration + rest_duration)
-        # if mute_last:
-        #     tfm.pad(end_duration=self.sample.full_duration + rest_duration)
+
+        # Soloing
+        if mute_first:
+            tfm.pad(start_duration=self.sample.full_duration + rest_duration)
+        if mute_last:
+            tfm.pad(end_duration=self.sample.full_duration + rest_duration)
+
         tfm.gain(gain_db=gain_db + self.gain)
 
         tfm.build(self.sample.file_name, temp_output_file)
@@ -188,8 +190,8 @@ class Phase(object):
     def checker_track(self,
             temp_output_file,
             local_gap,
-            # mute_first=False,
-            # mute_last=False,
+            mute_first=False,
+            mute_last=False,
             gain_db=0.0):
         """Repeat the sample on alternating tracks so the fade in and out can overlap"""
 
@@ -200,21 +202,23 @@ class Phase(object):
         track_a_repeat_count = half + remainder - 1
         track_b_repeat_count = half - 1
 
-        # if mute_last:
-        #     if remainder:
-        #         # there are an odd number of repeats, so the muted last repetition is in track A
-        #         self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db, mute_last=mute_last)
-        #         self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True)
-        #     else:
-        #         # there are an even number of repeats, so the muted last repetition is in track B
-        #         self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db)
-        #         self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True, mute_last=mute_last)
+        # Soloing
+        if mute_last:
+            if remainder:
+                # there are an odd number of repeats, so the muted last repetition is in track A
+                self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db, mute_last=mute_last)
+                self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True)
+            else:
+                # there are an even number of repeats, so the muted last repetition is in track B
+                self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db)
+                self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True, mute_last=mute_last)
 
-        # else:
-        #     self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db, mute_first=mute_first)
-        #     self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True)
+        else:
+            self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db, mute_first=mute_first)
+            self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True)
 
-        self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db)  # , mute_first=mute_first)
+
+        self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db, mute_first=mute_first)
         self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True)
 
 
@@ -227,21 +231,21 @@ class Phase(object):
             track_file_name = self.temp_folder + 'track-{}.wav'.format(i)
             track_file_names.append(track_file_name)
 
-            # mute_first = False
-            # if not self.end_align and i is not 1:
-            #     mute_first = True
+            mute_first = False
+            if self.solo_first and i is not 1:
+                mute_first = True
 
-            # mute_last = False
-            # if self.end_align and i is not self.n_tracks:
-            #     mute_last = True
+            mute_last = False
+            if self.solo_last and i is not self.n_tracks:
+                mute_last = True
 
             gain_db = self.gain_dbs[i - 1]
 
             self.checker_track(
                     track_file_name,
                     local_gap=self.gap * i,
-                    # mute_first=mute_first,
-                    # mute_last=mute_last,
+                    mute_first=mute_first,
+                    mute_last=mute_last,
                     gain_db=gain_db)
 
         if self.end_align:
@@ -281,6 +285,22 @@ class Phase(object):
 
         output_file_name = os.path.join(output_folder, output_file_name)
         return output_file_name
+
+    def set_solo_flags(self):
+        self.solo_first = False
+        self.solo_last = False
+        if self.solo is 'first' or self.solo is 'both':
+            self.solo_first = True
+        if self.solo is 'last' or self.solo is 'both':
+            self.solo_last = True
+
+        # Auto
+        # TODO: When initial offsets are implemented this gets more complicated
+        if self.solo is 'auto':
+            if self.end_align:
+                self.solo_last = True
+            else:
+                self.solo_first = True
 
 
 def get_args():
@@ -369,15 +389,10 @@ def get_args():
             action='store_true',
             default=False)
     parser.add_argument(
-            '--solo-first',
-            help='In the first repetition, mute all but Track #1',
-            action='store_true',
-            default=False)
-    parser.add_argument(
-            '--solo-last',
-            help='In the last repetition, mute all but Track #n - 1',
-            action='store_true',
-            default=False)
+            '--solo',
+            help='Mute all but track #1 during the first and/or last repetitions. `auto` decides which of first or last to solo based on which is most likely to be unison of all the tracks.',
+            default=None,
+            choices=[None, 'first', 'last', 'both', 'auto'])
 
     args = parser.parse_args()
 
@@ -403,5 +418,4 @@ if __name__ == '__main__':
             gain=args.gain,
             trim_start=args.trim_start,
             trim_end=args.trim_end,
-            solo_first=args.solo_first,
-            solo_last=args.solo_last)
+            solo=args.solo)
