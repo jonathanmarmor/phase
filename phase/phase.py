@@ -83,7 +83,9 @@ class Phase(object):
             gain=0.0,
             trim_start=False,
             trim_end=False,
-            solo=None):
+            solo_repetition_number=0,
+            solo_track_number=0,
+        ):
 
         self.args = {
             'input_file': input_file,
@@ -101,7 +103,8 @@ class Phase(object):
             'gain': gain,
             'trim_start': trim_start,
             'trim_end': trim_end,
-            'solo': solo,
+            'solo_repetition_number': solo_repetition_number,
+            'solo_track_number': solo_track_number,
         }
 
         self.input_file = input_file
@@ -119,9 +122,8 @@ class Phase(object):
         self.gain = gain
         self.trim_start = trim_start
         self.trim_end = trim_end
-        self.solo = solo
-
-        self.set_solo_flags()
+        self.solo_repetition_number = solo_repetition_number
+        self.solo_track_number = solo_track_number
 
         self.gain_dbs = get_gain_dbs(fade, n_tracks, quietest=quietest)
 
@@ -203,47 +205,55 @@ class Phase(object):
         track_b_repeat_count = half - 1
 
         # Soloing
+        mute_last_a = False
+        mute_last_b = False
         if mute_last:
             if remainder:
-                # there are an odd number of repeats, so the muted last repetition is in track A
-                self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db, mute_last=mute_last)
-                self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True)
+                # There are an odd number of repeats, so the muted last repetition is in track A
+                mute_last_a = True
             else:
-                # there are an even number of repeats, so the muted last repetition is in track B
-                self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db)
-                self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True, mute_last=mute_last)
+                # There are an even number of repeats, so the muted last repetition is in track B
+                mute_last_b = True
 
-        else:
-            self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db, mute_first=mute_first)
-            self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True)
-
-
-        self.make_track(track_a_file, local_gap, track_a_repeat_count, gain_db=gain_db, mute_first=mute_first)
-        self.make_track(track_b_file, local_gap, track_b_repeat_count, gain_db=gain_db, has_initial_rest=True)
-
+        self.make_track(
+                track_a_file,
+                local_gap,
+                track_a_repeat_count,
+                gain_db=gain_db,
+                mute_first=mute_first,
+                mute_last=mute_last_a)
+        self.make_track(
+                track_b_file,
+                local_gap,
+                track_b_repeat_count,
+                gain_db=gain_db,
+                mute_last=mute_last_b,
+                has_initial_rest=True)
 
         cbn = sox.Combiner()
         cbn.build([track_a_file, track_b_file], temp_output_file, 'mix-power')
 
     def phase(self):
         track_file_names = []
-        for i in range(1, self.n_tracks + 1):
+        for i in range(self.n_tracks):
             track_file_name = self.temp_folder + 'track-{}.wav'.format(i)
             track_file_names.append(track_file_name)
 
             mute_first = False
-            if self.solo_first and i is not 1:
-                mute_first = True
-
             mute_last = False
-            if self.solo_last and i is not self.n_tracks:
-                mute_last = True
+            if i != self.solo_track_number:
+                # Mute one of the repetitions in this track
+                if self.solo_repetition_number == 0:
+                    mute_first = True
+                elif self.solo_repetition_number == self.repeat_count - 1:
+                    mute_last = True
+                # TODO: Support repetition numbers other than first and last
 
-            gain_db = self.gain_dbs[i - 1]
+            gain_db = self.gain_dbs[i]
 
             self.checker_track(
                     track_file_name,
-                    local_gap=self.gap * i,
+                    local_gap=self.gap * (i + 1),
                     mute_first=mute_first,
                     mute_last=mute_last,
                     gain_db=gain_db)
@@ -285,22 +295,6 @@ class Phase(object):
 
         output_file_name = os.path.join(output_folder, output_file_name)
         return output_file_name
-
-    def set_solo_flags(self):
-        self.solo_first = False
-        self.solo_last = False
-        if self.solo is 'first' or self.solo is 'both':
-            self.solo_first = True
-        if self.solo is 'last' or self.solo is 'both':
-            self.solo_last = True
-
-        # Auto
-        # TODO: When initial offsets are implemented this gets more complicated
-        if self.solo is 'auto':
-            if self.end_align:
-                self.solo_last = True
-            else:
-                self.solo_first = True
 
 
 def get_args():
@@ -389,10 +383,15 @@ def get_args():
             action='store_true',
             default=False)
     parser.add_argument(
-            '--solo',
-            help='Mute all but track #1 during the first and/or last repetitions. `auto` decides which of first or last to solo based on which is most likely to be unison of all the tracks.',
-            default=None,
-            choices=[None, 'first', 'last', 'both', 'auto'])
+            '--solo-track-number',
+            help='',
+            type=int,
+            default=0)
+    parser.add_argument(
+            '--solo-repetition-number',
+            help='',
+            type=int,
+            default=0)
 
     args = parser.parse_args()
 
@@ -418,4 +417,5 @@ if __name__ == '__main__':
             gain=args.gain,
             trim_start=args.trim_start,
             trim_end=args.trim_end,
-            solo=args.solo)
+            solo_track_number=args.solo_track_number,
+            solo_repetition_number=args.solo_repetition_number)
