@@ -15,47 +15,34 @@ import json
 import sox
 
 
-def fade_in_gains(n_tracks, quietest=-60.0):
-    result = []
-    chunk_size = -quietest / (n_tracks - 1)
-    for i in range(n_tracks):
-        this_chunk_size = chunk_size * i
-        dB = quietest + this_chunk_size
-        result.append(dB)
-    return result
-
-
-def fade_out_gains(n_tracks, quietest=-60.0):
-    result = []
-    chunk_size = -quietest / (n_tracks - 1)
-    for i in reversed(range(n_tracks)):
-        this_chunk_size = chunk_size * i
-        dB = quietest + this_chunk_size
-        result.append(dB)
-    return result
-
-
-def fade_in_out_gains(n_tracks, quietest=-60.0):
-    half = n_tracks / 2
-    ins = fade_in_gains(half, quietest=quietest)
-    outs = fade_out_gains(half, quietest=quietest)
-    if n_tracks % 2:
-        ins.append(0.0)
-    return ins + outs
-
-
-def get_gain_dbs(fade_type, n_tracks, quietest=-60.0):
-    if fade_type is None:
+def fade_gains(direction, n_tracks, quietest=-60.0):
+    if direction == 'flat':
         return [0.0 for _ in range(n_tracks)]
-    if fade_type == 'in':
-        fade_function = fade_in_gains
-    elif fade_type == 'out':
-        fade_function = fade_out_gains
-    elif fade_type == 'in-out':
-        fade_function = fade_in_out_gains
+
+    elif direction == 'in-out':
+        half = n_tracks / 2
+        ins = fade_gains('in', half, quietest=quietest)
+        outs = fade_gains('out', half, quietest=quietest)
+        if n_tracks % 2:
+            ins.append(0.0)
+        return ins + outs
+
+    elif direction == 'in' or direction == 'out':
+        result = []
+        chunk_size = -quietest / (n_tracks - 1)
+
+        for i in range(n_tracks):
+            this_chunk_size = chunk_size * i
+            dB = quietest + this_chunk_size
+            result.append(dB)
+
+        if direction == 'out':
+            result.reverse()
+
+        return result
+
     else:
-        raise Exception('Allowed values for fade are None, "in", "out", and "in-out"')
-    return fade_function(n_tracks, quietest=quietest)
+        raise Exception("Allowed values for fades are 'flat', 'in', 'out', and 'in-out'")
 
 
 class Sample(object):
@@ -78,7 +65,7 @@ class Phase(object):
             end_pad_duration=0.0,
             temp_folder='tmp/',
             output_folder='output/',
-            fade=None,
+            fade='flat',
             quietest=-60.0,
             gain=0.0,
             trim_start=False,
@@ -125,7 +112,7 @@ class Phase(object):
         self.solo_repetition_number = solo_repetition_number
         self.solo_track_number = solo_track_number
 
-        self.gain_dbs = get_gain_dbs(fade, n_tracks, quietest=quietest)
+        self.gain_dbs = fade_gains(fade, n_tracks, quietest=quietest)
 
         self.sample = Sample(
                 input_file,
@@ -358,8 +345,8 @@ def get_args():
             '-f',
             '--fade',
             help='relative volumes of tracks: flat, fade in, fade out, or fade in then out',
-            default=None,
-            choices=[None, 'in', 'out', 'in-out'])
+            default='flat',
+            choices=['flat', 'in', 'out', 'in-out'])
     parser.add_argument(
             '-q',
             '--quietest',
