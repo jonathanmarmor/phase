@@ -3,7 +3,7 @@
 """Automatic Steve Reich phasing music
 
 Usage:
-    ./phase.py test_input_files/ravi1.wav --n-tracks=24 --gap=.02 --fade=in-out --repeat-count=20 --end-align
+    ./phase.py test_input_files/ravi1.wav --n-tracks=24 --gap=.02 --fade=in-out --repeat-count=20 --end-align --solo-repetition-number=19 --solo-track-number=12
 
 """
 
@@ -14,6 +14,7 @@ import json
 import sox
 
 from track import Track
+from cli import get_args
 
 
 def fade_gains(direction, n_tracks, quietest=-60.0):
@@ -192,3 +193,31 @@ class Phase(object):
 
         output_file_name = os.path.join(output_folder, output_file_name)
         return output_file_name
+
+
+def main():
+    args = get_args()
+
+    phaser = Phase(
+        args.input_file,
+        n_tracks=args.n_tracks,
+        gap=args.gap,
+        initial_gap=args.initial_gap,
+        repeat_count=args.repeat_count,
+        end_align=args.end_align,
+        start_pad_duration=args.start_pad_duration,
+        end_pad_duration=args.end_pad_duration,
+        temp_folder=args.temp_folder,
+        output_folder=args.output_folder,
+        fade=args.fade,
+        quietest=args.quietest,
+        gain=args.gain,
+        trim_start=args.trim_start,
+        trim_end=args.trim_end,
+        solo_track_number=args.solo_track_number,
+        solo_repetition_number=args.solo_repetition_number,
+    )
+
+
+if __name__ == '__main__':
+    main()
